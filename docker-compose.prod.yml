@@ -1,0 +1,11 @@
+services:
+  prisma-studio:
+    image: ghcr.io/${GITHUB_OWNER}/prisma-studio-docker:latest
+    container_name: prisma-studio
+    ports:
+      - "${STUDIO_PORT:-5555}:5555"
+    env_file:
+      - .env
+    environment:
+      - PRISMA_DB_PULL_ON_START=${PRISMA_DB_PULL_ON_START:-false}
+    restart: unless-stopped
