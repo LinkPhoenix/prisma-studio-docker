@@ -1,6 +1,7 @@
 node_modules/
 .env
 .env.local
+.env.traefik
 .env.*.local
 generated/
 .DS_Store

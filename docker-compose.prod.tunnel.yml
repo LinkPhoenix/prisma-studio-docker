@@ -1,11 +1,11 @@
-# Direct HTTP — localhost testing ONLY. See: docs/vps-direct-http-warning.md
+# SSH tunnel — bind 127.0.0.1 only. See: docs/vps-ssh-tunnel.md
 
 services:
   prisma-studio:
     image: ghcr.io/linkphoenix/prisma-studio-docker:latest
     container_name: prisma-studio
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     env_file:
       - .env
     environment:

@@ -1,0 +1,20 @@
+# Alternative: Traefik file provider (/opt/traefik/dynamic/)
+#
+# Prefer docker-compose.prod.traefik.yml labels (basic auth in compose).
+# Use this file only if you centralise routing in /opt/traefik/dynamic/
+# and share middleware with the Traefik dashboard.
+#
+# Copy to: /opt/traefik/dynamic/prisma-studio.yml
+# Requires: dashboard-auth middleware, container on Traefik Docker network
+
+http:
+  routers:
+    prisma-studio:
+      rule: "Host(`studio.example.com`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - dashboard-auth
+      service: prisma-studio@docker
+      tls:
+        certResolver: cloudflare

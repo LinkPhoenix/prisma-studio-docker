@@ -1,0 +1,31 @@
+# Production behind Traefik — router, TLS and basic auth via Docker labels.
+# Copy .env.traefik.example → .env on the VPS. See: docs/vps-traefik.md
+
+services:
+  prisma-studio:
+    image: ghcr.io/linkphoenix/prisma-studio-docker:latest
+    container_name: prisma-studio
+    env_file:
+      - .env
+    environment:
+      - PRISMA_DB_PULL_ON_START=${PRISMA_DB_PULL_ON_START:-false}
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
+      - traefik.http.routers.prisma-studio.rule=Host(`${STUDIO_HOST}`)
+      - traefik.http.routers.prisma-studio.entrypoints=websecure
+      - traefik.http.routers.prisma-studio.tls=true
+      - traefik.http.routers.prisma-studio.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-cloudflare}
+      - traefik.http.routers.prisma-studio.middlewares=prisma-studio-auth
+      - traefik.http.routers.prisma-studio.service=prisma-studio
+      - traefik.http.middlewares.prisma-studio-auth.basicauth.users=${BASIC_AUTH_USERS}
+      - traefik.http.middlewares.prisma-studio-auth.basicauth.realm=Prisma Studio
+      - traefik.http.services.prisma-studio.loadbalancer.server.port=5555
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}
