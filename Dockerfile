@@ -9,7 +9,9 @@ RUN bun install --frozen-lockfile
 
 COPY prisma ./prisma
 COPY prisma.config.ts ./
+COPY lib ./lib
 COPY scripts/entrypoint.sh /entrypoint.sh
+COPY scripts/resolve-database-url.ts ./scripts/
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 5555
