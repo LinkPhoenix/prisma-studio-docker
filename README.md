@@ -1,99 +1,50 @@
 # prisma-studio-docker
 
-Run [Prisma Studio](https://www.prisma.io/studio) in Docker to browse and edit an external PostgreSQL database. The Docker image is built and published to GHCR on every push to `main`.
+Run [Prisma Studio](https://www.prisma.io/studio) in Docker to browse and edit an external PostgreSQL database.
 
 Repository: [LinkPhoenix/prisma-studio-docker](https://github.com/LinkPhoenix/prisma-studio-docker)
 
-## Prerequisites
+Docker image (GHCR, built on push to `main`):
 
-- [Bun](https://bun.sh/)
-- [Docker](https://docs.docker.com/) and Docker Compose
-- A PostgreSQL database and its connection URL
+```
+ghcr.io/linkphoenix/prisma-studio-docker:latest
+```
 
-## Local setup
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Deployment overview](docs/deployment-overview.md) | All scenarios, decision matrix, architecture |
+| [Local development](docs/local-development.md) | Bun, Docker dev, GHCR image locally |
+| [VPS direct HTTP warning](docs/vps-direct-http-warning.md) | `crypto.randomUUID` error — why HTTP on public IP fails |
+| [VPS Traefik](docs/vps-traefik.md) | **Recommended prod** — HTTPS + basic auth |
+| [VPS SSH tunnel](docs/vps-ssh-tunnel.md) | No proxy — tunnel with password or SSH key |
+| [Security](docs/security.md) | Basic auth, secrets, firewall |
+
+## Quick start (local)
 
 ```powershell
 copy .env.example .env
-# Edit .env: set DATABASE_URL
-
 bun install
 bun run db:pull
-```
-
-`db:pull` introspects your database and updates `prisma/schema.prisma`.
-
-Commit the schema so the CI image includes your models:
-
-```powershell
-git add prisma/schema.prisma
-git commit -m "chore: sync schema from database"
-git push origin main
-```
-
-## Run locally (Docker)
-
-```powershell
-bun run docker:up
+bun run studio
 ```
 
 Open http://localhost:5555
 
-```powershell
-bun run docker:logs
-bun run docker:down
-```
+Or with Docker: `bun run docker:up`
 
-## Deploy on Hetzner (GHCR image)
+Full guide: [docs/local-development.md](docs/local-development.md)
 
-On the server, only `.env` and `docker-compose.prod.yml` are needed. **Never commit `.env`.**
+## Deployment decision matrix
 
-```bash
-mkdir prisma-studio && cd prisma-studio
-
-# Create .env with DATABASE_URL and GITHUB_OWNER
-cat > .env << 'EOF'
-DATABASE_URL=postgresql://user:password@host:5432/database?schema=public
-GITHUB_OWNER=LinkPhoenix
-STUDIO_PORT=5555
-PRISMA_DB_PULL_ON_START=false
-EOF
-
-curl -O https://raw.githubusercontent.com/LinkPhoenix/prisma-studio-docker/main/docker-compose.prod.yml
-
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
-```
-
-Access: `http://<server-ip>:5555`
-
-## Re-sync schema after database changes
-
-**Option A (recommended):** pull locally, commit, push (rebuilds GHCR image):
-
-```powershell
-bun run db:pull
-git add prisma/schema.prisma && git commit -m "chore: sync schema" && git push
-```
-
-**Option B:** set `PRISMA_DB_PULL_ON_START=true` in server `.env` to introspect on each container start.
-
-## Docker image
-
-Published to GitHub Container Registry:
-
-```
-ghcr.io/linkphoenix/prisma-studio-docker:latest
-ghcr.io/linkphoenix/prisma-studio-docker:sha-<commit>
-```
-
-After the first successful workflow run, ensure the package visibility is **Public** under GitHub → Packages if pulls fail without authentication.
-
-## Security
-
-- Prisma Studio has **no built-in authentication**. Anyone who can reach port 5555 can read and edit data (within DB user permissions).
-- Restrict access with your **Hetzner firewall** (allow only trusted IPs or VPN).
-- Never commit `.env` or `DATABASE_URL`.
-- A public repo exposes table/column names in `schema.prisma`, not row data.
+| Scenario | Compose file | UI works? | Doc |
+|----------|--------------|-----------|-----|
+| Local dev (Docker) | [`docker-compose.yml`](docker-compose.yml) | Yes | [local-development](docs/local-development.md) |
+| Local dev (no Docker) | `bun run studio` | Yes | [local-development](docs/local-development.md) |
+| VPS HTTP public `:5555` | [`docker-compose.prod.yml`](docker-compose.prod.yml) | **No** | [vps-direct-http-warning](docs/vps-direct-http-warning.md) |
+| VPS Traefik + basic auth | [`docker-compose.prod.traefik.yml`](docker-compose.prod.traefik.yml) | Yes | [vps-traefik](docs/vps-traefik.md) |
+| VPS SSH tunnel | [`docker-compose.prod.tunnel.yml`](docker-compose.prod.tunnel.yml) | Yes (localhost) | [vps-ssh-tunnel](docs/vps-ssh-tunnel.md) |
 
 ## Scripts
 
@@ -106,6 +57,15 @@ After the first successful workflow run, ensure the package visibility is **Publ
 | `bun run docker:down` | Stop Docker containers |
 | `bun run docker:logs` | Follow container logs |
 
+## Traefik (recommended for VPS)
+
+Basic auth, HTTPS, and routing are configured **in the compose file** via Traefik labels.
+
+Copy [`.env.traefik.example`](.env.traefik.example) → `.env` on the VPS (or set vars in Portainer). See [docs/vps-traefik.md](docs/vps-traefik.md).
+
+Optional file-provider templates: [`traefik/dynamic/`](traefik/dynamic/)
+
 ## References
 
 - [Prisma Docker guide](https://www.prisma.io/docs/guides/deployment/docker)
+- [Traefik dashboard security](https://doc.traefik.io/traefik/setup/docker/)
