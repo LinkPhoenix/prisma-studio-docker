@@ -58,10 +58,14 @@ certificatesResolvers:
 
 ## Step 1 — Generate basic auth credentials
 
-Prisma Studio has **no built-in login**. Generate an htpasswd line:
+Prisma Studio has **no built-in login**. Generate an htpasswd line on the VPS.
+
+### Recommended — `apache2-utils` on the VPS
 
 ```bash
-docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'YOUR_STRONG_PASSWORD'
+sudo apt install apache2-utils
+
+htpasswd -nbB admin 'YOUR_STRONG_PASSWORD'
 ```
 
 Output example:
@@ -70,10 +74,18 @@ Output example:
 admin:$2y$05$xyz...
 ```
 
+Paste the full line into `.env` as `BASIC_AUTH_USERS="admin:$2y$05$..."`.
+
 **Multiple users:** comma-separate entries:
 
 ```
 admin:$2y$05$...,editor:$2y$05$...
+```
+
+### Alternative — Docker (no apt install)
+
+```bash
+docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'YOUR_STRONG_PASSWORD'
 ```
 
 ---
@@ -152,10 +164,18 @@ No port 5555 is published on the host — Traefik proxies HTTPS internally.
 
 ## Step 4 — Verify
 
-1. Open `https://studio.example.com` (your `STUDIO_HOST`)
-2. Browser prompts for **basic auth** (admin / your password)
-3. Prisma Studio UI loads — no `crypto.randomUUID` error
-4. Tables visible (schema must be in the GHCR image)
+1. Check the basic auth label on the container:
+
+```bash
+docker inspect prisma-studio | grep -i basicauth -A 2
+```
+
+You should see `traefik.http.middlewares.prisma-studio-auth.basicauth.users` with your `user:hash` (not empty).
+
+2. Open `https://studio.example.com` (your `STUDIO_HOST`)
+3. Browser prompts for **basic auth** (admin / your password)
+4. Prisma Studio UI loads — no `crypto.randomUUID` error
+5. Tables visible (schema must be in the GHCR image)
 
 ---
 

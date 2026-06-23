@@ -2,11 +2,12 @@
 # Shared basic auth middleware — reuse for Traefik dashboard AND Prisma Studio.
 # Same mechanism as https://doc.traefik.io/traefik/setup/docker/ (dashboard-auth)
 #
-# Generate credentials (bcrypt, recommended):
-#   docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'your-password' | sed -e 's/\$/\$\$/g'
+# Generate credentials on the VPS (recommended):
+#   sudo apt install apache2-utils
+#   htpasswd -nbB admin 'your-password'
 #
-# Or use a users file (one user per line: user:hash):
-#   docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'your-password' >> /opt/traefik/usersfile
+# Alternative (Docker):
+#   docker run --rm httpd:2.4-alpine htpasswd -nbB admin 'your-password'
 
 http:
   middlewares:
