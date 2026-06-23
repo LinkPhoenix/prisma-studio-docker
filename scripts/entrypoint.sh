@@ -9,5 +9,5 @@ fi
 echo "Generating Prisma Client..."
 bunx --bun prisma generate
 
-echo "Starting Prisma Studio on 0.0.0.0:5555..."
-exec bunx --bun prisma studio --port 5555 --hostname 0.0.0.0 --browser none
+echo "Starting Prisma Studio on port 5555..."
+exec bunx --bun prisma studio --port 5555 --browser none
