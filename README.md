@@ -12,6 +12,14 @@ ghcr.io/linkphoenix/prisma-studio-docker:latest
 
 ## Documentation
 
+### ⚠️ 🚨 Important — VPS + domain/subdomain
+
+> 🔒 **Studio UI** (browser → VPS) — ✅ **Covered by this repo** — HTTPS + basic auth via Traefik → [vps-traefik.md](docs/vps-traefik.md)
+>
+> 🗄️ **PostgreSQL** (VPS → database) — ❌ **Not covered** — enable **TLS/SSL on PostgreSQL** yourself → [PostgreSQL official SSL docs](https://www.postgresql.org/docs/current/ssl-tcp.html)
+>
+> 📖 → [Database connection TLS — project notes](docs/security.md#database-connection-tls-vps-deployments) · `sslmode` in `DATABASE_URL`
+
 | Guide | Description |
 |-------|-------------|
 | [Deployment overview](docs/deployment-overview.md) | All scenarios, decision matrix, architecture |
@@ -19,7 +27,7 @@ ghcr.io/linkphoenix/prisma-studio-docker:latest
 | [VPS direct HTTP warning](docs/vps-direct-http-warning.md) | `crypto.randomUUID` error — why HTTP on public IP fails |
 | [VPS Traefik](docs/vps-traefik.md) | **Recommended prod** — HTTPS + basic auth |
 | [VPS SSH tunnel](docs/vps-ssh-tunnel.md) | No proxy — tunnel with password or SSH key |
-| [Security](docs/security.md) | Basic auth, secrets, firewall |
+| [Security](docs/security.md) | Basic auth, secrets, firewall, database TLS (VPS) |
 
 ## Quick start (local)
 

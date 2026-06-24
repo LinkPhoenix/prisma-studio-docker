@@ -16,13 +16,66 @@ Prisma Studio does not support user accounts, sessions, or API keys. Anyone who 
 
 | Control | Recommendation |
 |---------|----------------|
-| HTTPS | Required for Studio UI (see [vps-direct-http-warning.md](./vps-direct-http-warning.md)) |
+| HTTPS (Studio UI) | Required when accessed via domain/subdomain (see [vps-direct-http-warning.md](./vps-direct-http-warning.md)) |
 | Basic auth | `BASIC_AUTH_USERS` in stack env (compose labels) or Traefik `usersfile` |
 | Public port 5555 | **Do not expose** — use Traefik or SSH tunnel |
 | Firewall (Hetzner) | Allow 443 (Traefik); restrict SSH to trusted IPs |
 | `DATABASE_URL` | Server `.env` / Portainer secrets only — **never commit** |
+| PostgreSQL TLS | **Required** when Studio runs on a VPS and the DB is remote — see below |
 | PostgreSQL user | Minimum privileges needed (read-only if edits not required) |
 | GitHub repo | Public `schema.prisma` exposes table/column names, not row data |
+
+---
+
+## Database connection TLS (VPS deployments)
+
+When Prisma Studio runs on a **VPS** and you access it through a **domain or subdomain** (Traefik HTTPS, or any public-facing setup), the connection from the VPS container to PostgreSQL should be **encrypted with TLS**.
+
+This project secures **browser → Studio** (HTTPS + basic auth via Traefik). It does **not** configure **Studio → PostgreSQL** TLS — that is your responsibility.
+
+### Why it matters
+
+- Credentials and query data travel over the network between the VPS and the database host.
+- Managed PostgreSQL providers (Neon, Supabase, RDS, etc.) often **require** TLS for remote connections.
+- Encrypting the UI (HTTPS) does **not** encrypt the database link — both layers are independent.
+
+### What you must configure yourself
+
+1. **Enable TLS/SSL on PostgreSQL** (or use a managed provider that exposes TLS on port 5432).  
+   **This repository does not cover PostgreSQL installation or server-side TLS/SSL setup.**  
+   → Official guide: [PostgreSQL — Secure TCP/IP Connections with SSL](https://www.postgresql.org/docs/current/ssl-tcp.html)
+2. **Obtain or trust the server certificate** (provider CA bundle, or your own CA if self-hosted).
+3. **Set `sslmode` (and related params) in `DATABASE_URL`** on the VPS, for example:
+
+   ```
+   postgresql://user:password@db.example.com:5432/mydb?schema=public&sslmode=require
+   ```
+
+   Stricter verification (recommended when you have the CA file):
+
+   ```
+   postgresql://user:password@db.example.com:5432/mydb?schema=public&sslmode=verify-full&sslrootcert=/path/to/ca.pem
+   ```
+
+4. **Mount the CA certificate into the container** if your provider or `sslmode=verify-full` requires a file on disk (not covered by this repo’s compose files).
+
+Refer to:
+
+- [PostgreSQL — Secure TCP/IP Connections with SSL](https://www.postgresql.org/docs/current/ssl-tcp.html) (server TLS/SSL setup — **not covered by this repo**)
+- Your database provider’s documentation (Neon, Supabase, RDS, etc.)
+- [Prisma’s PostgreSQL connection URL reference](https://www.prisma.io/docs/orm/overview/databases/postgresql#connection-details) (`sslmode`, client-side params)
+
+### Out of scope for this repository
+
+| Topic | Covered here? |
+|-------|----------------|
+| Traefik HTTPS for `STUDIO_HOST` | Yes — [vps-traefik.md](./vps-traefik.md) |
+| Basic auth in front of Studio | Yes — [vps-traefik.md](./vps-traefik.md) |
+| PostgreSQL installation with TLS/SSL | **No** — see [PostgreSQL SSL docs](https://www.postgresql.org/docs/current/ssl-tcp.html) |
+| CA / client certificate provisioning | **No** |
+| Mounting `sslrootcert` in Docker | **No** |
+
+Local development (`localhost` → local Postgres) may use a non-TLS connection; production VPS → remote database should not.
 
 ---
 

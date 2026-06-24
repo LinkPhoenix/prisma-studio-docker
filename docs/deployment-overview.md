@@ -48,6 +48,12 @@ All deployment paths assume:
 2. Introspected schema: `bun run db:pull` → commit `prisma/schema.prisma` → push (rebuilds GHCR image)
 3. Docker (and optionally [Bun](https://bun.sh/) for local schema sync)
 
+### VPS + domain/subdomain (additional requirement)
+
+If Studio runs on a VPS and users reach it via a **hostname** (e.g. `https://studio.example.com`), you must also secure **VPS → PostgreSQL** with **TLS**. HTTPS in Traefik only protects the browser; the database connection is a separate hop.
+
+This repository documents Traefik HTTPS and basic auth for the Studio UI. **PostgreSQL installation with TLS/SSL, certificates, and CA mounting are not included** — configure them before or alongside deployment. See [PostgreSQL SSL docs](https://www.postgresql.org/docs/current/ssl-tcp.html) and [security.md — Database connection TLS](./security.md#database-connection-tls-vps-deployments).
+
 ## Which compose file should I use?
 
 ### Local development
@@ -66,7 +72,12 @@ Use [`docker-compose.yml`](../docker-compose.yml) to build from source with live
 
 ## Security
 
-Production deployments should use HTTPS and basic authentication. See [security.md](./security.md).
+Production deployments should use:
+
+- **HTTPS + basic auth** for the Studio UI (browser → VPS)
+- **TLS** for the PostgreSQL connection when Studio on a VPS talks to a remote database (VPS → DB)
+
+See [security.md](./security.md).
 
 ## Related docs
 

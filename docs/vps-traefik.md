@@ -17,6 +17,8 @@ flowchart LR
 
 ## Prerequisites
 
+### Traefik on the VPS
+
 Traefik already running on the VPS with:
 
 - Docker provider (`exposedByDefault: false`)
@@ -53,6 +55,24 @@ certificatesResolvers:
         provider: cloudflare
         # CLOUDFLARE_DNS_API_TOKEN env on Traefik container
 ```
+
+### PostgreSQL TLS/SSL (your responsibility)
+
+This guide sets up **HTTPS for `STUDIO_HOST`** (browser → Traefik → Studio). It does **not** set up **TLS/SSL for PostgreSQL** (`DATABASE_HOST`, server certificates, `ssl` in `postgresql.conf`, etc.).
+
+When Studio runs on a VPS and PostgreSQL is remote, use a **TLS-encrypted connection** and the appropriate certificate trust. Add `sslmode` (and `sslrootcert` if needed) to `DATABASE_URL` in the VPS `.env` or Portainer secrets.
+
+**PostgreSQL server TLS/SSL installation is not covered by this project.** Refer to the official documentation:
+
+→ [PostgreSQL — Secure TCP/IP Connections with SSL](https://www.postgresql.org/docs/current/ssl-tcp.html)
+
+Example client-side URL (after PostgreSQL TLS is enabled on the server):
+
+```
+DATABASE_URL=postgresql://user:password@db.example.com:5432/mydb?schema=public&sslmode=require
+```
+
+Mounting CA files into the Docker container is also out of scope. Details: [security.md — Database connection TLS](./security.md#database-connection-tls-vps-deployments).
 
 ---
 
@@ -102,7 +122,7 @@ Set these in Portainer (**Stack → Environment variables**) or copy [`.env.trae
 | `DATABASE_PORT` | `5432` | PostgreSQL port (default: 5432) |
 | `DATABASE_NAME` | `mydb` | PostgreSQL database name |
 | `DATABASE_SCHEMA` | `public` | Schema (default: public) |
-| `DATABASE_URL` | *(optional)* | Full URL — overrides the variables above if set |
+| `DATABASE_URL` | *(optional)* | Full URL — overrides the variables above if set; add `sslmode=require` (or stricter) for remote DB TLS |
 | `STUDIO_HOST` | `studio.example.com` | Subdomain for Traefik router rule |
 | `BASIC_AUTH_USERS` | `admin:$2y$05$...` | htpasswd output from step 1 |
 | `TRAEFIK_CERT_RESOLVER` | `cloudflare` | Certificate resolver name in Traefik static config |

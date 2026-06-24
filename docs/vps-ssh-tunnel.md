@@ -12,6 +12,8 @@ Your browser opens `http://localhost:5555` — a secure context — so the Studi
 
 For team access or persistent URLs, prefer [vps-traefik.md](./vps-traefik.md) (HTTPS + basic auth).
 
+If PostgreSQL is **remote** from the VPS, use a **TLS-encrypted** `DATABASE_URL` (`sslmode`, provider CA, etc.). SSH secures browser → VPS only, not VPS → database. **PostgreSQL TLS/SSL server setup is not covered** — see [PostgreSQL official SSL docs](https://www.postgresql.org/docs/current/ssl-tcp.html) and [security.md — Database connection TLS](./security.md#database-connection-tls-vps-deployments).
+
 ---
 
 ## Step 1 — Deploy on the VPS
